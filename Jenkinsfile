@@ -27,7 +27,8 @@ pipeline {
             }
             steps {
                 withSonarQubeEnv('sonar') {
-                    sh 'mvn sonar:sonar sarvesh545'
+                    sh 'mvn sonar:sonar -Dsonar.organization=Sarvesh545'
+'
                 }
             }
         }
