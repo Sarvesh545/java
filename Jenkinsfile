@@ -26,8 +26,11 @@ pipeline {
                 }
             }
             steps {
-                withSonarQubeEnv('sonar') {
-                    sh 'mvn sonar:sonar -Dsonar.organization=Sarvesh545'
+                 withSonarQubeEnv('sonar') {
+        script {
+            def scannerHome = tool 'sonar-scanner'
+            withEnv(["PATH+SONAR=$scannerHome/bin"]) {
+                sh 'mvn sonar:sonar -Dsonar.organization=Sarvesh545'
 '
                 }
             }
