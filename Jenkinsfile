@@ -2,10 +2,12 @@ pipeline {
     agent any
 
     environment {
-        function_name = 'java1234'
+        function_name = 'jenkins'
     }
 
     stages {
+
+        // CI Start
         stage('Build') {
             steps {
                 echo 'Build'
@@ -13,20 +15,77 @@ pipeline {
             }
         }
 
+
+        stage("SonarQube analysis") {
+            agent any
+
+            when {
+                anyOf {
+                    branch 'feature/*'
+                    branch 'main'
+                }
+            }
+            steps {
+                withSonarQubeEnv('sonar') {
+                    sh 'mvn sonar:sonar'
+                }
+            }
+        }
+
+        stage("Quality Gate") {
+            steps {
+                script {
+                    try {
+                        timeout(time: 10, unit: 'MINUTES') {
+                            waitForQualityGate abortPipeline: true
+                        }
+                    }
+                    catch (Exception ex) {
+
+                    }
+                }
+            }
+        }
+
         stage('Push') {
             steps {
                 echo 'Push'
 
-                sh "aws s3 cp target/sample-1.0.3.jar s3://java1213"
+                sh "aws s3 cp target/sample-1.0.3.jar s3://jav12"
             }
         }
 
-        stage('Deploy') {
-            steps {
-                echo 'Build'
+        // Ci Ended
 
-                sh "aws lambda update-function-code --function-name $function_name --region us-east-2 --s3-bucket java1213 --s3-key sample-1.0.3.jar"
+        // CD Started
+
+        stage('Deployments') {
+            parallel {
+
+                stage('Deploy to Dev') {
+                    steps {
+                        echo 'Build'
+
+                        sh "aws lambda update-function-code --function-name $function_name --region us-east-2 --s3-bucket jav12 --s3-key sample-1.0.3.jar"
+                    }
+                }
+
+                stage('Deploy to test ') {
+                    when {
+                        branch 'main'
+                    }
+                    steps {
+                        echo 'Build'
+
+                        // sh "aws lambda update-function-code --function-name $function_name --region us-east-2 --s3-bucket jav12 --s3-key sample-1.0.3.jar"
+                    }
+                }
             }
         }
+
+
+        
+
+        // CD Ended
     }
 }
